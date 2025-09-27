@@ -1,0 +1,20 @@
+[package]
+name = "app-builder"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+application = { path = "../../application" }
+card-management-domain = { path = "../../domain/card-management-domain" }
+learning-domain = { path = "../../domain/learning-domain" }
+in-memory-store = { path = "../stores/in-memory-store" }
+cqrs-utils = { path = "../cqrs-utils" }
+
+async-trait.workspace = true
+cqrs-es.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+uuid.workspace = true
