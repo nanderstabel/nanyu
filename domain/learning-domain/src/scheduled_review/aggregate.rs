@@ -13,7 +13,7 @@ use super::{
     event::ScheduledReviewEvent::{self, *},
 };
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct ScheduledReview {
     pub id: String,
     pub question: String,
@@ -33,13 +33,13 @@ impl View<ScheduledReview> for ScheduledReview {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct AllScheduledReviews {
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+pub struct ScheduledReviewCollection {
     #[serde(flatten)]
     pub scheduled_reviews: HashMap<String, ScheduledReview>,
 }
 
-impl View<ScheduledReview> for AllScheduledReviews {
+impl View<ScheduledReview> for ScheduledReviewCollection {
     fn update(&mut self, event: &EventEnvelope<ScheduledReview>) {
         self.scheduled_reviews
             // Get the entry for the aggregate_id

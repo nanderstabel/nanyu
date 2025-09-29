@@ -9,7 +9,7 @@ use super::{
     event::FlashcardEvent::{self, *},
 };
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct Flashcard {
     pub id: String,
     pub question: String,
@@ -37,13 +37,13 @@ impl View<Flashcard> for Flashcard {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct AllFlashcards {
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+pub struct FlashcardCollection {
     #[serde(flatten)]
     pub flashcards: HashMap<String, Flashcard>,
 }
 
-impl View<Flashcard> for AllFlashcards {
+impl View<Flashcard> for FlashcardCollection {
     fn update(&mut self, event: &EventEnvelope<Flashcard>) {
         self.flashcards
             // Get the entry for the aggregate_id

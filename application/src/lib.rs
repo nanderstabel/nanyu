@@ -1,3 +1,3 @@
 pub mod acl;
-pub mod card_management_service;
-pub mod learning_service;
+pub mod cqrs_utils;
+pub mod services;

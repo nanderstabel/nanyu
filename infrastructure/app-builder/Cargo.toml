@@ -8,7 +8,6 @@ application = { path = "../../application" }
 card-management-domain = { path = "../../domain/card-management-domain" }
 learning-domain = { path = "../../domain/learning-domain" }
 in-memory-store = { path = "../stores/in-memory-store" }
-cqrs-utils = { path = "../cqrs-utils" }
 
 async-trait.workspace = true
 cqrs-es.workspace = true
