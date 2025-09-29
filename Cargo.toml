@@ -17,6 +17,7 @@ members = [
     "infrastructure/app-builder",
 ]
 
+
 [workspace.dependencies]
 async-trait = "0.1"
 cqrs-es = "0.4"
