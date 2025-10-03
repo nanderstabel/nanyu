@@ -1,29 +1,31 @@
-use crate::services::{Service, ServiceBuilder};
-use card_management_domain::flashcard::aggregate::{Flashcard, FlashcardCollection};
+use crate::{
+    cqrs_utils::collection::Collection,
+    services::{Service, ServiceBuilder},
+};
+use card_management_domain::flashcard::aggregate::Flashcard;
 use cqrs_es::{CqrsFramework, EventStore, persist::ViewRepository};
 use std::sync::Arc;
 
-pub struct CardManagementService<ES, VR1, VR2>
+pub struct CardManagementService<ES>
 where
     ES: EventStore<Flashcard>,
-    VR1: ViewRepository<Flashcard, Flashcard>,
-    VR2: ViewRepository<FlashcardCollection, Flashcard>,
 {
     pub cqrs: CqrsFramework<Flashcard, ES>,
-    pub flashcard_view_repository: Arc<VR1>,
-    pub flashcard_collection_view_repository: Arc<VR2>,
+    pub flashcard_view_repository: Arc<dyn ViewRepository<Flashcard, Flashcard>>,
+    pub flashcard_collection_view_repository:
+        Arc<dyn ViewRepository<Collection<Flashcard>, Flashcard>>,
 }
 
-impl<ES, VR1, VR2> CardManagementService<ES, VR1, VR2>
+impl<ES> CardManagementService<ES>
 where
     ES: EventStore<Flashcard> + 'static,
-    VR1: ViewRepository<Flashcard, Flashcard> + 'static,
-    VR2: ViewRepository<FlashcardCollection, Flashcard> + 'static,
 {
     pub fn new(
         cqrs: CqrsFramework<Flashcard, ES>,
-        flashcard_view_repository: Arc<VR1>,
-        flashcard_collection_view_repository: Arc<VR2>,
+        flashcard_view_repository: Arc<dyn ViewRepository<Flashcard, Flashcard>>,
+        flashcard_collection_view_repository: Arc<
+            dyn ViewRepository<Collection<Flashcard>, Flashcard>,
+        >,
     ) -> Self {
         Self {
             cqrs,
@@ -37,23 +39,18 @@ where
     }
 }
 
-impl<ES, VR1, VR2> Service for CardManagementService<ES, VR1, VR2>
+impl<ES> Service for CardManagementService<ES>
 where
     ES: EventStore<Flashcard>,
-    VR1: ViewRepository<Flashcard, Flashcard>,
-    VR2: ViewRepository<FlashcardCollection, Flashcard>,
 {
     type Aggregate = Flashcard;
-    type IndividualView = Flashcard;
-    type CollectionView = FlashcardCollection;
+    type View = Flashcard;
     type EventStore = ES;
-    type IndividualRepo = VR1;
-    type CollectionRepo = VR2;
 
     fn new(
         cqrs: CqrsFramework<Self::Aggregate, Self::EventStore>,
-        individual_repo: Arc<Self::IndividualRepo>,
-        collection_repo: Arc<Self::CollectionRepo>,
+        individual_repo: Arc<dyn ViewRepository<Self::View, Self::Aggregate>>,
+        collection_repo: Arc<dyn ViewRepository<Collection<Self::Aggregate>, Self::Aggregate>>,
     ) -> Self {
         Self {
             cqrs,

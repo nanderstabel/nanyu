@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use cqrs_es::{
-    Aggregate, CqrsFramework, EventStore, Query, View,
-    persist::{GenericQuery, ViewRepository},
-};
+use cqrs_es::{Aggregate, CqrsFramework, EventStore, Query, View, persist::ViewRepository};
+
+use crate::cqrs_utils::collection::Collection;
 
 pub mod card_management_service;
 pub mod learning_service;
@@ -11,18 +10,15 @@ pub mod learning_service;
 /// Defines the contract for an application service.
 ///
 /// A Service can be constructed from a CqrsFramework and its associated repositories.
-pub trait Service: Sized {
-    type Aggregate: Aggregate;
-    type IndividualView: View<Self::Aggregate>; // Add this line
-    type CollectionView: View<Self::Aggregate>;
+pub trait Service {
+    type Aggregate: Aggregate + View<Self::Aggregate>;
+    type View: View<Self::Aggregate>;
     type EventStore: EventStore<Self::Aggregate>;
-    type IndividualRepo: ViewRepository<Self::IndividualView, Self::Aggregate>; // Use IndividualView here
-    type CollectionRepo: ViewRepository<Self::CollectionView, Self::Aggregate>;
 
     fn new(
         cqrs: CqrsFramework<Self::Aggregate, Self::EventStore>,
-        individual_repo: Arc<Self::IndividualRepo>,
-        collection_repo: Arc<Self::CollectionRepo>,
+        individual_repo: Arc<dyn ViewRepository<Self::View, Self::Aggregate>>,
+        collection_repo: Arc<dyn ViewRepository<Collection<Self::Aggregate>, Self::Aggregate>>,
     ) -> Self;
 }
 
@@ -30,8 +26,8 @@ pub trait Service: Sized {
 pub struct ServiceBuilder<S: Service> {
     event_store: Option<S::EventStore>,
     queries: Vec<Box<dyn Query<S::Aggregate>>>,
-    individual_repository: Option<Arc<S::IndividualRepo>>,
-    collection_repository: Option<Arc<S::CollectionRepo>>,
+    individual_repository: Option<Arc<dyn ViewRepository<S::View, S::Aggregate>>>,
+    collection_repository: Option<Arc<dyn ViewRepository<Collection<S::Aggregate>, S::Aggregate>>>,
 }
 
 impl<S> ServiceBuilder<S>
@@ -40,8 +36,6 @@ where
     S::Aggregate: Send + Sync + 'static,
     <<S as Service>::Aggregate as Aggregate>::Services: Default + Send + Sync,
     S::EventStore: Send + Sync + 'static,
-    S::IndividualRepo: Send + Sync + 'static,
-    S::CollectionRepo: Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -57,12 +51,18 @@ where
         self
     }
 
-    pub fn with_individual_repository(mut self, repository: Arc<S::IndividualRepo>) -> Self {
+    pub fn with_individual_repository(
+        mut self,
+        repository: Arc<dyn ViewRepository<S::View, S::Aggregate>>,
+    ) -> Self {
         self.individual_repository = Some(repository);
         self
     }
 
-    pub fn with_collection_repository(mut self, repository: Arc<S::CollectionRepo>) -> Self {
+    pub fn with_collection_repository(
+        mut self,
+        repository: Arc<dyn ViewRepository<Collection<S::Aggregate>, S::Aggregate>>,
+    ) -> Self {
         self.collection_repository = Some(repository);
         self
     }
@@ -81,17 +81,7 @@ where
             .collection_repository
             .ok_or("Collection view repository is required")?;
 
-        let all_queries = self
-            .queries
-            .into_iter()
-            .chain(
-                vec![Box::new(GenericQuery::new(individual_repository.clone()))
-                    as Box<dyn Query<S::Aggregate>>]
-                .into_iter(),
-            )
-            .collect();
-
-        let cqrs = CqrsFramework::new(event_store, all_queries, Default::default());
+        let cqrs = CqrsFramework::new(event_store, self.queries, Default::default());
 
         Ok(S::new(cqrs, individual_repository, collection_repository))
     }

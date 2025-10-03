@@ -3,34 +3,35 @@ use std::sync::Arc;
 use cqrs_es::{CqrsFramework, EventStore, persist::ViewRepository};
 
 use learning_domain::scheduled_review::{
-    aggregate::{ScheduledReview, ScheduledReviewCollection},
-    command::ScheduledReviewCommand,
+    aggregate::ScheduledReview, command::ScheduledReviewCommand,
 };
 
-use crate::services::{Service, ServiceBuilder};
+use crate::{
+    cqrs_utils::collection::Collection,
+    services::{Service, ServiceBuilder},
+};
 
-pub struct LearningService<ES, VR1, VR2>
+pub struct LearningService<ES>
 where
     ES: EventStore<ScheduledReview>,
-    VR1: ViewRepository<ScheduledReview, ScheduledReview>,
-    VR2: ViewRepository<ScheduledReviewCollection, ScheduledReview>,
 {
     pub cqrs: CqrsFramework<ScheduledReview, ES>,
-    pub scheduled_review_view_repository: Arc<VR1>,
-    pub scheduled_review_collection_view_repository: Arc<VR2>,
+    pub scheduled_review_view_repository: Arc<dyn ViewRepository<ScheduledReview, ScheduledReview>>,
+    pub scheduled_review_collection_view_repository:
+        Arc<dyn ViewRepository<Collection<ScheduledReview>, ScheduledReview>>,
 }
 
-impl<ES, VR1, VR2> LearningService<ES, VR1, VR2>
+impl<ES> LearningService<ES>
 where
     ES: EventStore<ScheduledReview> + 'static,
-    VR1: ViewRepository<ScheduledReview, ScheduledReview> + 'static,
-    VR2: ViewRepository<ScheduledReviewCollection, ScheduledReview> + 'static,
 {
     // `new` now accepts its dependencies instead of creating them.
     pub fn new(
         cqrs: CqrsFramework<ScheduledReview, ES>,
-        scheduled_review_view_repository: Arc<VR1>,
-        scheduled_review_collection_view_repository: Arc<VR2>,
+        scheduled_review_view_repository: Arc<dyn ViewRepository<ScheduledReview, ScheduledReview>>,
+        scheduled_review_collection_view_repository: Arc<
+            dyn ViewRepository<Collection<ScheduledReview>, ScheduledReview>,
+        >,
     ) -> Self {
         Self {
             cqrs,
@@ -56,23 +57,18 @@ where
     }
 }
 
-impl<ES, VR1, VR2> Service for LearningService<ES, VR1, VR2>
+impl<ES> Service for LearningService<ES>
 where
     ES: EventStore<ScheduledReview>,
-    VR1: ViewRepository<ScheduledReview, ScheduledReview>,
-    VR2: ViewRepository<ScheduledReviewCollection, ScheduledReview>,
 {
     type Aggregate = ScheduledReview;
-    type IndividualView = ScheduledReview;
-    type CollectionView = ScheduledReviewCollection;
+    type View = ScheduledReview;
     type EventStore = ES;
-    type IndividualRepo = VR1;
-    type CollectionRepo = VR2;
 
     fn new(
         cqrs: CqrsFramework<Self::Aggregate, Self::EventStore>,
-        individual_repo: Arc<Self::IndividualRepo>,
-        collection_repo: Arc<Self::CollectionRepo>,
+        individual_repo: Arc<dyn ViewRepository<Self::View, Self::Aggregate>>,
+        collection_repo: Arc<dyn ViewRepository<Collection<Self::Aggregate>, Self::Aggregate>>,
     ) -> Self {
         Self {
             cqrs,

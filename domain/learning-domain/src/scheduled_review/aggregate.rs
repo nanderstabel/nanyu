@@ -1,10 +1,5 @@
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
-
 use async_trait::async_trait;
-use cqrs_es::{
-    Aggregate, EventEnvelope, Query, View,
-    persist::{ViewContext, ViewRepository},
-};
+use cqrs_es::{Aggregate, EventEnvelope, View};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -30,24 +25,6 @@ impl View<ScheduledReview> for ScheduledReview {
                 self.id = id.clone();
             }
         }
-    }
-}
-
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
-pub struct ScheduledReviewCollection {
-    #[serde(flatten)]
-    pub scheduled_reviews: HashMap<String, ScheduledReview>,
-}
-
-impl View<ScheduledReview> for ScheduledReviewCollection {
-    fn update(&mut self, event: &EventEnvelope<ScheduledReview>) {
-        self.scheduled_reviews
-            // Get the entry for the aggregate_id
-            .entry(event.aggregate_id.clone())
-            // or insert a new one if it doesn't exist
-            .or_default()
-            // update the view with the event
-            .update(event);
     }
 }
 

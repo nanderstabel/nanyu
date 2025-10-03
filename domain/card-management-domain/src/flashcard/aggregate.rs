@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use cqrs_es::{Aggregate, EventEnvelope, View};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use super::{
     command::FlashcardCommand::{self, *},
@@ -34,24 +33,6 @@ impl View<Flashcard> for Flashcard {
                 self.answer = String::new();
             }
         }
-    }
-}
-
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
-pub struct FlashcardCollection {
-    #[serde(flatten)]
-    pub flashcards: HashMap<String, Flashcard>,
-}
-
-impl View<Flashcard> for FlashcardCollection {
-    fn update(&mut self, event: &EventEnvelope<Flashcard>) {
-        self.flashcards
-            // Get the entry for the aggregate_id
-            .entry(event.aggregate_id.clone())
-            // or insert a new one if it doesn't exist
-            .or_default()
-            // update the view with the event
-            .update(event);
     }
 }
 
