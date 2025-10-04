@@ -60,7 +60,7 @@ where
     V: View<A> + Default + Clone,
     A: Aggregate + Send + Sync,
 {
-    async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<A>]) {
+    async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<A>]) {
         if events.is_empty() {
             return;
         }
@@ -75,7 +75,10 @@ where
                     aggregate_type = A::aggregate_type()
                 )
             })
-            .unwrap_or(aggregate_id.to_string());
+            .unwrap_or(format!(
+                "{aggregate_type}",
+                aggregate_type = A::aggregate_type()
+            ));
 
         let (mut view, view_context) = match self
             .view_repository

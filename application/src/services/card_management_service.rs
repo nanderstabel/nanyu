@@ -2,35 +2,32 @@ use crate::{
     cqrs_utils::collection::Collection,
     services::{Service, ServiceBuilder},
 };
-use card_management_domain::flashcard::aggregate::Flashcard;
+use card_management_domain::deck::aggregate::Deck;
 use cqrs_es::{CqrsFramework, EventStore, persist::ViewRepository};
 use std::sync::Arc;
 
 pub struct CardManagementService<ES>
 where
-    ES: EventStore<Flashcard>,
+    ES: EventStore<Deck>,
 {
-    pub cqrs: CqrsFramework<Flashcard, ES>,
-    pub flashcard_view_repository: Arc<dyn ViewRepository<Flashcard, Flashcard>>,
-    pub flashcard_collection_view_repository:
-        Arc<dyn ViewRepository<Collection<Flashcard>, Flashcard>>,
+    pub cqrs: CqrsFramework<Deck, ES>,
+    pub deck_view_repository: Arc<dyn ViewRepository<Deck, Deck>>,
+    pub deck_collection_view_repository: Arc<dyn ViewRepository<Collection<Deck>, Deck>>,
 }
 
 impl<ES> CardManagementService<ES>
 where
-    ES: EventStore<Flashcard> + 'static,
+    ES: EventStore<Deck> + 'static,
 {
     pub fn new(
-        cqrs: CqrsFramework<Flashcard, ES>,
-        flashcard_view_repository: Arc<dyn ViewRepository<Flashcard, Flashcard>>,
-        flashcard_collection_view_repository: Arc<
-            dyn ViewRepository<Collection<Flashcard>, Flashcard>,
-        >,
+        cqrs: CqrsFramework<Deck, ES>,
+        deck_view_repository: Arc<dyn ViewRepository<Deck, Deck>>,
+        deck_collection_view_repository: Arc<dyn ViewRepository<Collection<Deck>, Deck>>,
     ) -> Self {
         Self {
             cqrs,
-            flashcard_view_repository,
-            flashcard_collection_view_repository,
+            deck_view_repository,
+            deck_collection_view_repository,
         }
     }
 
@@ -41,10 +38,10 @@ where
 
 impl<ES> Service for CardManagementService<ES>
 where
-    ES: EventStore<Flashcard>,
+    ES: EventStore<Deck>,
 {
-    type Aggregate = Flashcard;
-    type View = Flashcard;
+    type Aggregate = Deck;
+    type View = Deck;
     type EventStore = ES;
 
     fn new(
@@ -54,8 +51,8 @@ where
     ) -> Self {
         Self {
             cqrs,
-            flashcard_view_repository: individual_repo,
-            flashcard_collection_view_repository: collection_repo,
+            deck_view_repository: individual_repo,
+            deck_collection_view_repository: collection_repo,
         }
     }
 }

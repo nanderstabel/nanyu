@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 async-trait.workspace = true
 cqrs-es.workspace = true
+indexmap = { version = "2.11", features = ["serde"] }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
