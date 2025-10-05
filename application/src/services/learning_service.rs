@@ -45,12 +45,12 @@ where
     pub async fn start_session_for_deck(
         &self,
         deck_id: String,
-        question_language: Language,
-        answer_language: Language,
+        question_languages: Vec<Language>,
+        answer_languages: Vec<Language>,
     ) -> Result<String, String> {
         println!(
             "Starting session for deck_id: {}, question_language: {:?}, answer_language: {:?}",
-            deck_id, question_language, answer_language
+            deck_id, question_languages, answer_languages
         );
 
         // 1. Load the deck to get the flashcard IDs
@@ -89,8 +89,8 @@ where
             session_id: session_id.clone(),
             deck_id,
             cards_to_review, // This is now correctly a Vec<String>
-            question_language,
-            answer_language,
+            question_languages,
+            answer_languages,
         };
 
         // 5. Execute the command

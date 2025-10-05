@@ -19,8 +19,8 @@ pub struct LearningSession {
     pub deck_id: String,
 
     // Defines the "front" and "back" of the cards for this session.
-    pub question_language: Option<Language>,
-    pub answer_language: Option<Language>,
+    pub question_languages: Vec<Language>,
+    pub answer_languages: Vec<Language>,
 
     // The queue of card IDs to be reviewed.
     pub cards_to_review: VecDeque<String>,
@@ -53,8 +53,8 @@ impl Aggregate for LearningSession {
                 session_id,
                 deck_id,
                 mut cards_to_review,
-                question_language,
-                answer_language,
+                question_languages,
+                answer_languages,
             } => {
                 if has_been_created {
                     return Err(SessionAlreadyStarted);
@@ -65,8 +65,8 @@ impl Aggregate for LearningSession {
                     session_id,
                     deck_id,
                     cards_to_review: cards_to_review.clone(),
-                    question_language,
-                    answer_language,
+                    question_languages,
+                    answer_languages,
                 });
 
                 if let Some(first_card_id) = cards_to_review.pop() {
@@ -122,14 +122,14 @@ impl Aggregate for LearningSession {
                 session_id,
                 deck_id,
                 cards_to_review,
-                question_language,
-                answer_language,
+                question_languages,
+                answer_languages,
             } => {
                 self.id = session_id;
                 self.deck_id = deck_id;
                 self.cards_to_review = cards_to_review.into();
-                self.question_language = Some(question_language);
-                self.answer_language = Some(answer_language);
+                self.question_languages = question_languages;
+                self.answer_languages = answer_languages;
                 self.status = SessionStatus::InProgress;
             }
             SessionAbandoned | SessionCompleted => {

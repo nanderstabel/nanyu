@@ -10,8 +10,8 @@ pub enum LearningSessionCommand {
         session_id: String,
         deck_id: String,
         cards_to_review: Vec<String>,
-        question_language: Language,
-        answer_language: Language,
+        question_languages: Vec<Language>,
+        answer_languages: Vec<Language>,
     },
 
     /// Abandons a session before it is completed.
