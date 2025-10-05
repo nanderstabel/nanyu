@@ -60,14 +60,14 @@ where
     V: View<A> + Default + Clone,
     A: Aggregate + Send + Sync,
 {
-    async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<A>]) {
+    async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<A>]) {
         if events.is_empty() {
             return;
         }
 
         // Use the aggregate ID as the view ID for individual views,
         // or a fixed ID for collection views.
-        let view_id = self
+        let projection_id = self
             .is_collection
             .then(|| {
                 format!(
@@ -79,6 +79,11 @@ where
                 "{aggregate_type}",
                 aggregate_type = A::aggregate_type()
             ));
+        let view_id = if self.is_collection {
+            projection_id.clone()
+        } else {
+            aggregate_id.to_string()
+        };
 
         let (mut view, view_context) = match self
             .view_repository
@@ -101,7 +106,7 @@ where
 
         for adapter in &self.adapters {
             // FIXME: send and forget?
-            adapter.on_update(&view, &view_id, events).await;
+            adapter.on_update(&view, &projection_id, events).await;
         }
     }
 }

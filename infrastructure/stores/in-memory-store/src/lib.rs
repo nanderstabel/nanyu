@@ -46,6 +46,7 @@ where
     }
 
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError> {
+        println!("Updating view with ID: {}", context.view_instance_id);
         let payload = serde_json::to_value(&view).unwrap();
         self.map
             .lock()

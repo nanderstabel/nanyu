@@ -1,58 +1,56 @@
-use crate::{
-    cqrs_utils::collection::Collection,
-    services::{Service, ServiceBuilder},
-};
-use card_management_domain::deck::aggregate::Deck;
-use cqrs_es::{CqrsFramework, EventStore, persist::ViewRepository};
-use std::sync::Arc;
+use card_management_domain::deck::{aggregate::Deck, command::DeckCommand};
+use cqrs_es::{CqrsFramework, EventStore};
 
 pub struct CardManagementService<ES>
 where
     ES: EventStore<Deck>,
 {
-    pub cqrs: CqrsFramework<Deck, ES>,
-    pub deck_view_repository: Arc<dyn ViewRepository<Deck, Deck>>,
-    pub deck_collection_view_repository: Arc<dyn ViewRepository<Collection<Deck>, Deck>>,
+    cqrs: CqrsFramework<Deck, ES>,
 }
 
 impl<ES> CardManagementService<ES>
 where
     ES: EventStore<Deck> + 'static,
 {
-    pub fn new(
-        cqrs: CqrsFramework<Deck, ES>,
-        deck_view_repository: Arc<dyn ViewRepository<Deck, Deck>>,
-        deck_collection_view_repository: Arc<dyn ViewRepository<Collection<Deck>, Deck>>,
-    ) -> Self {
-        Self {
-            cqrs,
-            deck_view_repository,
-            deck_collection_view_repository,
-        }
+    pub fn new(cqrs: CqrsFramework<Deck, ES>) -> Self {
+        Self { cqrs }
     }
 
-    pub fn builder() -> ServiceBuilder<Self> {
-        ServiceBuilder::new()
+    pub async fn create_new_deck(&self, name: String) -> Result<String, String> {
+        let deck_id = uuid::Uuid::new_v4().to_string();
+        let command = DeckCommand::CreateDeck {
+            id: deck_id.clone(),
+            name,
+        };
+
+        self.cqrs
+            .execute(&deck_id, command)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(deck_id)
     }
-}
 
-impl<ES> Service for CardManagementService<ES>
-where
-    ES: EventStore<Deck>,
-{
-    type Aggregate = Deck;
-    type View = Deck;
-    type EventStore = ES;
+    pub async fn add_flashcard_to_deck(
+        &self,
+        deck_id: String,
+        dutch: String,
+        mandarin: String,
+        pinyin: String,
+        english: String,
+    ) -> Result<(), String> {
+        let command = DeckCommand::AddFlashcard {
+            dutch,
+            mandarin,
+            pinyin,
+            english,
+        };
 
-    fn new(
-        cqrs: CqrsFramework<Self::Aggregate, Self::EventStore>,
-        individual_repo: Arc<dyn ViewRepository<Self::View, Self::Aggregate>>,
-        collection_repo: Arc<dyn ViewRepository<Collection<Self::Aggregate>, Self::Aggregate>>,
-    ) -> Self {
-        Self {
-            cqrs,
-            deck_view_repository: individual_repo,
-            deck_collection_view_repository: collection_repo,
-        }
+        self.cqrs
+            .execute(&deck_id, command)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
 }

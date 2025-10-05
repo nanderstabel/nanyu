@@ -23,7 +23,6 @@ pub struct LearningSession {
     pub answer_language: Option<Language>,
 
     // The queue of card IDs to be reviewed.
-    #[serde(skip)]
     pub cards_to_review: VecDeque<String>,
 
     pub current_card_id: Option<String>,
