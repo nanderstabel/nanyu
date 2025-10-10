@@ -13,8 +13,8 @@ members = [
 
     # Infrastructure libraries
     "infrastructure/stores/in-memory-store",
-    "infrastructure/cqrs-utils",
     "infrastructure/app-builder",
+    "infrastructure/seeders",
 ]
 
 

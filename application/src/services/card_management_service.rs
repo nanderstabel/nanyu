@@ -16,8 +16,12 @@ where
         Self { cqrs }
     }
 
-    pub async fn create_new_deck(&self, name: String) -> Result<String, String> {
-        let deck_id = uuid::Uuid::new_v4().to_string();
+    pub async fn create_new_deck(
+        &self,
+        deck_id: Option<String>,
+        name: String,
+    ) -> Result<String, String> {
+        let deck_id = deck_id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
         let command = DeckCommand::CreateDeck {
             id: deck_id.clone(),
             name,
